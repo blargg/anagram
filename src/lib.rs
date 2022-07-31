@@ -1,15 +1,15 @@
-
-use std::{collections::BTreeMap};
 use english_dictionary_data::all_words;
 use lazy_static::lazy_static;
+use std::collections::BTreeMap;
 
 lazy_static! {
     static ref WL: WordlistByCount = WordlistByCount::init();
 }
 
 // Letter Count. Handy for working with anagrams.
+// Filters the characters to `is_alphabetic` characters.
 // Letters are normalized to lower case.
-#[derive(Debug,PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct LC {
     counts: BTreeMap<char, usize>,
 }
@@ -18,13 +18,11 @@ impl LC {
     fn from_word(chars: &str) -> Self {
         let mut counts = BTreeMap::new();
         let chars = chars.to_lowercase();
-        for c in chars.chars() {
+        for c in chars.chars().filter(|c| c.is_alphabetic()) {
             *counts.entry(c).or_insert(0) += 1;
         }
 
-        LC {
-            counts
-        }
+        LC { counts }
     }
 }
 
@@ -51,12 +49,7 @@ pub fn single_word_anagram(word: &str) -> Vec<&'static str> {
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::lazy_static;
     use super::*;
-
-    lazy_static! {
-        static ref WL: WordlistByCount = WordlistByCount::init();
-    }
 
     #[test]
     fn it_works() {
