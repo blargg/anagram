@@ -1,6 +1,7 @@
 use english_dictionary_data::all_words;
 use lazy_static::{lazy_static, __Deref};
 use std::collections::{BTreeMap, HashMap};
+use vgraph::VGraph;
 
 lazy_static! {
     static ref WL: WordlistByCount = WordlistByCount::init();
@@ -111,6 +112,37 @@ impl Iterator for MultiCount {
 
         Some(cur)
     }
+}
+
+/// Describes a graph to search for multi word anagrams.
+/// Each node is the number of letters remaining in the anagram.
+/// Each transition is using a word with a given number of characters (abstractly, using all single words that have that letter count).
+struct MultiWordSearch { }
+
+impl VGraph for MultiWordSearch {
+    type Node = LC;
+
+    type Dist = usize;
+
+    fn out_edges(&self, node: Self::Node) -> Vec<Self::Node> {
+        todo!()
+    }
+
+    fn dist(&self, from: Self::Node, to: Self::Node) -> Self::Dist {
+        1
+    }
+}
+
+fn multi2(chars: &LC, words_to_use: usize) -> Vec<Vec<&'static str>> {
+    if words_to_use == 0 {
+        panic!("Invalid parameter.");
+    }
+
+    if words_to_use == 1 {
+        return vec![single_lc_anagram(chars)];
+    }
+
+    todo!()
 }
 
 fn multi_anagram(chars: &LC) -> Vec<Vec<&'static str>> {
