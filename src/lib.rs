@@ -1,7 +1,7 @@
 use english_dictionary_data::all_words;
 use lazy_static::{lazy_static, __Deref};
+use petgraph::visit::{NodeCount, GraphBase, IntoNeighbors, IntoNeighborsDirected};
 use std::collections::{BTreeMap, HashMap};
-use vgraph::VGraph;
 
 lazy_static! {
     static ref WL: WordlistByCount = WordlistByCount::init();
@@ -117,19 +117,33 @@ impl Iterator for MultiCount {
 /// Describes a graph to search for multi word anagrams.
 /// Each node is the number of letters remaining in the anagram.
 /// Each transition is using a word with a given number of characters (abstractly, using all single words that have that letter count).
-struct MultiWordSearch { }
+struct MultiWordSearch { 
+    named: HashMap<usize, LC>,
+}
 
-impl VGraph for MultiWordSearch {
-    type Node = LC;
+impl GraphBase for MultiWordSearch {
+    type EdgeId = (Self::NodeId, Self::NodeId);
 
-    type Dist = usize;
+    type NodeId = usize;
+}
 
-    fn out_edges(&self, node: Self::Node) -> Vec<Self::Node> {
+impl NodeCount for MultiWordSearch {
+    fn node_count(self: &Self) -> usize {
+        // Not implementing.
+        // It should be possible for word search, but not needed.
         todo!()
     }
+}
 
-    fn dist(&self, from: Self::Node, to: Self::Node) -> Self::Dist {
-        1
+impl IntoNeighborsDirected for MultiWordSearch {
+    type NeighborsDirected;
+
+    fn neighbors_directed(self,n:Self::NodeId,d:petgraph::Direction) -> Self::NeighborsDirected {
+        let curr_lc = self.named.get(&n).expect("tried expanding a node that was
+        not named in the graph");
+
+        for next in MultiCount::new()
+        todo!()
     }
 }
 
