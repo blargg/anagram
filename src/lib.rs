@@ -1,6 +1,6 @@
 use english_dictionary_data::all_words;
-use lazy_static::{lazy_static, __Deref};
-use std::collections::{BTreeMap, HashMap};
+use lazy_static::{lazy_static};
+use std::collections::{BTreeMap};
 use vgraph::VGraph;
 
 lazy_static! {
@@ -72,21 +72,21 @@ pub fn multi_word_anagram(phrase: &str) -> Vec<Vec<&'static str>> {
 }
 
 struct MultiCount {
-    caps: HashMap<char, usize>,
+    caps: BTreeMap<char, usize>,
     key_order: Vec<char>,
-    cur: HashMap<char, usize>,
+    cur: BTreeMap<char, usize>,
 }
 
 impl MultiCount {
-    fn new(caps: HashMap<char, usize>) -> Self {
+    fn new(caps: BTreeMap<char, usize>) -> Self {
         let mut key_order: Vec<char> = caps.keys().cloned().collect();
         key_order.sort();
-        MultiCount { caps, key_order, cur: HashMap::new() }
+        MultiCount { caps, key_order, cur: BTreeMap::new() }
     }
 }
 
 impl Iterator for MultiCount {
-    type Item = HashMap<char, usize>;
+    type Item = BTreeMap<char, usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let last = self.key_order.last().unwrap();
@@ -217,17 +217,17 @@ mod tests {
 
     #[test]
     fn multicount_range_test() {
-        let cap = HashMap::from([('a', 2), ('b', 2)]);
+        let cap = BTreeMap::from([('a', 2), ('b', 2)]);
         assert_eq!(vec![
-            HashMap::new(),
-            HashMap::from([('a', 1)]),
-            HashMap::from([('a', 2)]),
-            HashMap::from([('b', 1), ('a', 0)]),
-            HashMap::from([('b', 1), ('a', 1)]),
-            HashMap::from([('b', 1), ('a', 2)]),
-            HashMap::from([('b', 2), ('a', 0)]),
-            HashMap::from([('b', 2), ('a', 1)]),
-            HashMap::from([('b', 2), ('a', 2)]),
+            BTreeMap::new(),
+            BTreeMap::from([('a', 1)]),
+            BTreeMap::from([('a', 2)]),
+            BTreeMap::from([('b', 1), ('a', 0)]),
+            BTreeMap::from([('b', 1), ('a', 1)]),
+            BTreeMap::from([('b', 1), ('a', 2)]),
+            BTreeMap::from([('b', 2), ('a', 0)]),
+            BTreeMap::from([('b', 2), ('a', 1)]),
+            BTreeMap::from([('b', 2), ('a', 2)]),
         ],
         MultiCount::new(cap).collect::<Vec<_>>()
         );
