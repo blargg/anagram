@@ -1,7 +1,7 @@
 use english_dictionary_data::all_words;
 use lazy_static::{lazy_static};
 use std::collections::{BTreeMap};
-use vgraph::VGraph;
+use vgraph::{VGraph, BFSIterator, bfs_all_paths};
 
 lazy_static! {
     static ref WL: WordlistByCount = WordlistByCount::init();
@@ -10,7 +10,7 @@ lazy_static! {
 // Letter Count. Handy for working with anagrams.
 // Filters the characters to `is_alphabetic` characters.
 // Letters are normalized to lower case.
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Clone)]
 struct LC {
     counts: BTreeMap<char, usize>,
 }
@@ -28,6 +28,10 @@ impl LC {
 
     fn empty() -> Self {
         LC { counts: BTreeMap::new() }
+    }
+    
+    fn is_empty(&self) -> bool {
+        self.counts.values().all(|count| *count == 0)
     }
 
     fn remaining_letters(&self, right: &LC) -> Self {
@@ -125,7 +129,26 @@ impl VGraph for MultiWordSearch {
     type Dist = usize;
 
     fn out_edges(&self, node: Self::Node) -> Vec<Self::Node> {
-        todo!()
+        let mut edges = Vec::new();
+        // TODO remove the case where we circle back to the same node.
+        for possible in MultiCount::new(node.counts.clone()) {
+            let letter_counts = LC {
+                counts: possible,
+            };
+            if letter_counts.is_empty() {
+                continue;
+            }
+
+            if letter_counts == LC::from_word("two") {
+                println!("here");
+            }
+
+            if !single_lc_anagram(&letter_counts).is_empty() {
+                edges.push(node.remaining_letters(&letter_counts));
+            }
+        }
+
+        edges
     }
 
     fn dist(&self, from: Self::Node, to: Self::Node) -> Self::Dist {
@@ -133,16 +156,25 @@ impl VGraph for MultiWordSearch {
     }
 }
 
-fn multi2(chars: &LC, words_to_use: usize) -> Vec<Vec<&'static str>> {
+// TODO: make this into an iterator
+fn multi2(chars: LC, words_to_use: usize) -> Vec<Vec<Vec<&'static str>>> {
     if words_to_use == 0 {
         panic!("Invalid parameter.");
     }
 
-    if words_to_use == 1 {
-        return vec![single_lc_anagram(chars)];
+    let mut answers = Vec::new();
+    for path in bfs_all_paths(MultiWordSearch {}, chars, |lc| lc.is_empty()) {
+        let answer = path.as_slice().windows(2).map(|window| {
+            let larger = &window[0];
+            let smaller = &window[1];
+            let diff = larger.remaining_letters(smaller);
+            single_lc_anagram(&diff)
+        })
+        .collect::<Vec<_>>();
+        answers.push(answer);
     }
 
-    todo!()
+    answers
 }
 
 fn multi_anagram(chars: &LC) -> Vec<Vec<&'static str>> {
@@ -199,6 +231,24 @@ mod tests {
     //     let expected: Vec<Vec<&str>> = vec![vec!["welcome", "to", "my", "kingdom"]];
     //     assert_eq!(expected, multi_word_anagram("two milkmen go comedy"));
     // }
+
+    #[test]
+    fn multi2_test() {
+        let expected: Vec<Vec<Vec<&str>>> = vec![vec![vec!["welcome"], vec!["to"], vec!["my"], vec!["kingdom"]]];
+        assert_eq!(expected, multi2(LC::from_word("two milkmen go comedy"), 1));
+    }
+
+    #[test]
+    fn debug() {
+        let chars = LC::from_word("two milkmen go comedy");
+        let expected: Vec<Vec<LC>> = vec![vec![LC::from_word("abc")]];
+        assert_eq!(expected, bfs_all_paths(MultiWordSearch {}, chars, |lc| true).take(10).collect::<Vec<Vec<LC>>>());
+    }
+
+    #[test]
+    fn debugtwo() {
+        assert_eq!(vec!["two"], single_lc_anagram(&LC::from_word("two")))
+    }
 
     impl LC {
         fn singleton(c: char, count: usize) -> Self {
